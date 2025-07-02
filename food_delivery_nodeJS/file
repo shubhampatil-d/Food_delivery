@@ -1,0 +1,23 @@
+for  register new user- post -
+http://localhost:5000/api/auth/register
+{
+  "name": "Shubham",
+  "phone": "9876543210",
+  "email": "shubham@example.com",
+  "password": "mypassword"
+}
+for login POST 
+ /api/auth/login
+ {
+  "email": "shubham@example.com",
+  "password": "mypassword"
+}
+{
+  "message": "Login successful",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NWI4OGY1OTk5YWIzYzY1MDc3ZTcyMSIsImlhdCI6MTc1MDgyOTQxOSwiZXhwIjoxNzUxNDM0MjE5fQ.lOsE81YvuehKWAt0dyS3Dwa1gL8z5FvTVFPcXox-Fc0",
+  "user": {
+    "id": "685b88f5999ab3c65077e721",
+    "name": "Shubham",
+    "email": "shubham@example.com"
+  }
+}
