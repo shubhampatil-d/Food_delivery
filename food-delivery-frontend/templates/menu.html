@@ -25,7 +25,13 @@
   </nav>
 
   <div class="container">
-    <h2 class="mb-4 text-center">Menu</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="mb-0 text-center w-100">Menu</h2>
+      <div>
+        <a href="/add-menu-item?restaurant_id={{ restaurant_id }}" class="btn btn-info me-2">🍔 Add Menu Item</a>
+        <a href="/add-review?restaurant_id={{ restaurant_id }}" class="btn btn-dark">⭐ Add Review</a>
+      </div>
+    </div>
     {% if menu %}
       <div class="row">
         {% for item in menu %}
@@ -54,13 +60,17 @@
           </div>
         {% endfor %}
       </div>
+      <div class="text-center mt-4">
+        <a href="/cart" class="btn btn-success me-2">🛒 View Cart</a>
+        <a href="/restaurants" class="btn btn-secondary">Back to Restaurants</a>
+      </div>
     {% else %}
       <div class="alert alert-info text-center">No menu items available for this restaurant.</div>
+      <div class="text-center mt-4">
+        <a href="/add-menu-item?restaurant_id={{ restaurant_id }}" class="btn btn-info me-2">🍔 Add Menu Item</a>
+        <a href="/restaurants" class="btn btn-secondary">Back to Restaurants</a>
+      </div>
     {% endif %}
-    <div class="text-center mt-4">
-      <a href="/cart" class="btn btn-success me-2">🛒 View Cart</a>
-      <a href="/restaurants" class="btn btn-secondary">Back to Restaurants</a>
-    </div>
   </div>
 
   <!-- Footer -->

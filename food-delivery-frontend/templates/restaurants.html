@@ -24,7 +24,15 @@
   </nav>
 
   <div class="container">
-    <h2 class="mb-4 text-center">Restaurants Near You</h2>
+    {% if messages %}
+      {% for msg in messages %}
+        <div class="alert alert-success text-center">{{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="mb-0 text-center w-100">Restaurants Near You</h2>
+      <a href="/add-restaurant" class="btn btn-warning ms-3">🏢 Add Restaurant</a>
+    </div>
     {% if restaurants %}
       <div class="row">
         {% for r in restaurants %}
@@ -35,7 +43,8 @@
                 <p class="card-text">Cuisine: {{ r.cuisineType }}</p>
                 <p class="card-text">Rating: {{ r.rating }}</p>
                 <p class="card-text">Status: <span class="fw-bold" style="color: {{ 'green' if r.status == 'open' else 'red' }}">{{ r.status|capitalize }}</span></p>
-                <a href="/restaurants/{{ r._id }}/menu" class="btn btn-primary">View Menu</a>
+                <a href="/restaurants/{{ r._id }}/menu" class="btn btn-primary me-2">View Menu</a>
+                <a href="/add-category?restaurant_id={{ r._id }}" class="btn btn-info">Add Category</a>
               </div>
             </div>
           </div>

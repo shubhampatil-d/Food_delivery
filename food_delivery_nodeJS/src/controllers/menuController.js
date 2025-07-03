@@ -56,3 +56,17 @@ exports.getMenuByRestaurant = async (req, res) => {
     res.status(500).json({ message: 'Failed to get menu' });
   }
 };
+
+exports.getCategoriesByRestaurant = async (req, res) => {
+  try {
+    const restaurantId = req.query.restaurant;
+    if (!restaurantId) {
+      return res.status(400).json({ message: 'Restaurant ID is required' });
+    }
+    const categories = await MenuCategory.find({ restaurant: restaurantId }).sort('displayOrder');
+    res.json({ categories });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Failed to fetch categories' });
+  }
+};

@@ -1,8 +1,7 @@
-from flask import Flask, render_template, request, redirect, session, url_for
+from flask import Flask, render_template, request, redirect, session, url_for, flash
 import requests
 import os
 from dotenv import load_dotenv
-from flask import flash
 
 
 load_dotenv()
@@ -114,7 +113,9 @@ def restaurants():
         res = requests.get(f"{API_BASE}/restaurants")
         if res.status_code == 200:
             data = res.json()
-            return render_template('restaurants.html', restaurants=data.get('restaurants', []))
+            from flask import get_flashed_messages
+            messages = get_flashed_messages()
+            return render_template('restaurants.html', restaurants=data.get('restaurants', []), messages=messages)
         else:
             return "Error fetching restaurants", 500
     except Exception as e:
@@ -281,6 +282,128 @@ def track_order(order_id):
 def logout():
     session.clear()
     return redirect('/')
+
+@app.route('/add-restaurant', methods=['GET', 'POST'])
+def add_restaurant():
+    if not session.get('token'):
+        return redirect('/login')
+    message = None
+    if request.method == 'POST':
+        try:
+            payload = {
+                'name': request.form['name'],
+                'cuisineType': request.form['cuisineType'],
+                'description': request.form.get('description', ''),
+                'address': request.form['address'],
+                'latitude': float(request.form['latitude']),
+                'longitude': float(request.form['longitude']),
+                'open': request.form.get('open', ''),
+                'close': request.form.get('close', ''),
+                'minimumOrderAmount': float(request.form.get('minimumOrderAmount', 0)),
+                'deliveryFee': float(request.form.get('deliveryFee', 0)),
+                'averagePrepTime': float(request.form.get('averagePrepTime', 0)),
+                'status': request.form.get('status', 'open'),
+                'rating': float(request.form.get('rating', 0)),
+            }
+            headers = {'Authorization': f"Bearer {session['token']}"}
+            res = requests.post(f"{API_BASE}/restaurants", json=payload, headers=headers)
+            if res.status_code in [200, 201]:
+                flash("✅ Restaurant added successfully!")
+                return redirect('/restaurants')
+            else:
+                message = f"❌ Failed to add restaurant: {res.text}"
+        except Exception as e:
+            message = f"❌ Error: {str(e)}"
+    return render_template('add_restaurant.html', message=message)
+
+@app.route('/add-menu-item', methods=['GET', 'POST'])
+def add_menu_item():
+    if not session.get('token'):
+        return redirect('/login')
+    message = None
+    headers = {'Authorization': f"Bearer {session['token']}"}
+    restaurants = []
+    categories = []
+    restaurant_id = request.args.get('restaurant_id') or request.form.get('restaurant')
+    try:
+        res = requests.get(f"{API_BASE}/restaurants")
+        if res.status_code == 200:
+            restaurants = res.json().get('restaurants', [])
+        # Use restaurant_id from query or default to first
+        if not restaurant_id and restaurants:
+            restaurant_id = restaurants[0]['_id']
+        if restaurant_id:
+            cat_res = requests.get(f"{API_BASE}/menu/categories?restaurant={restaurant_id}", headers=headers)
+            if cat_res.status_code == 200:
+                categories = cat_res.json().get('categories', [])
+    except Exception as e:
+        message = f"❌ Error fetching data: {str(e)}"
+    if request.method == 'POST':
+        try:
+            payload = {
+                'restaurant': restaurant_id,
+                'category': request.form['category'],
+                'name': request.form['name'],
+                'isVeg': request.form['isVeg'] == 'true',
+                'price': float(request.form['price']),
+                'description': request.form.get('description', ''),
+                'isAvailable': request.form['isAvailable'] == 'true',
+            }
+            res = requests.post(f"{API_BASE}/menu/items", json=payload, headers=headers)
+            if res.status_code in [200, 201]:
+                message = "✅ Menu item added successfully!"
+            else:
+                message = f"❌ Failed to add menu item: {res.text}"
+        except Exception as e:
+            message = f"❌ Error: {str(e)}"
+    back_to_menu_url = f"/restaurants/{restaurant_id}/menu" if restaurant_id else "/restaurants"
+    return render_template('add_menu_item.html', message=message, restaurants=restaurants, categories=categories, restaurant_id=restaurant_id, back_to_menu_url=back_to_menu_url)
+
+@app.route('/add-category', methods=['GET', 'POST'])
+def add_category():
+    if not session.get('token'):
+        return redirect('/login')
+    message = None
+    restaurant_id = request.args.get('restaurant_id') or request.form.get('restaurant_id')
+    if request.method == 'POST':
+        try:
+            payload = {
+                'restaurant': restaurant_id,
+                'name': request.form['name'],
+                'displayOrder': int(request.form.get('displayOrder', 0)) if request.form.get('displayOrder') else None
+            }
+            headers = {'Authorization': f"Bearer {session['token']}"}
+            res = requests.post(f"{API_BASE}/menu/categories", json=payload, headers=headers)
+            if res.status_code in [200, 201]:
+                message = "✅ Category added successfully!"
+            else:
+                message = f"❌ Failed to add category: {res.text}"
+        except Exception as e:
+            message = f"❌ Error: {str(e)}"
+    return render_template('add_category.html', message=message, restaurant_id=restaurant_id)
+
+@app.route('/add-review', methods=['GET', 'POST'])
+def add_review():
+    if not session.get('token'):
+        return redirect('/login')
+    message = None
+    restaurant_id = request.args.get('restaurant_id') or request.form.get('restaurant_id')
+    if request.method == 'POST':
+        try:
+            payload = {
+                'restaurant': restaurant_id,
+                'rating': int(request.form['rating']),
+                'comment': request.form.get('comment', '')
+            }
+            headers = {'Authorization': f"Bearer {session['token']}"}
+            res = requests.post(f"{API_BASE}/reviews", json=payload, headers=headers)
+            if res.status_code in [200, 201]:
+                return redirect(f"/restaurants/{restaurant_id}/menu")
+            else:
+                message = f"❌ Failed to add review: {res.text}"
+        except Exception as e:
+            message = f"❌ Error: {str(e)}"
+    return render_template('add_review.html', message=message, restaurant_id=restaurant_id)
 
 if __name__ == '__main__':
     app.run(debug=True)
