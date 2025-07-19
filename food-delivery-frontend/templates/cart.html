@@ -1,101 +1,71 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Your Cart - Food Delivery</title>
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
-    <div class="container-fluid">
-      <a class="navbar-brand" href="/">Food Delivery</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ms-auto">
-          <li class="nav-item"><a class="nav-link" href="/restaurants">Restaurants</a></li>
-          <li class="nav-item"><a class="nav-link" href="/orders">Orders</a></li>
-        </ul>
-      </div>
-    </div>
-  </nav>
+{% extends 'base.html' %}
 
-  <div class="container">
-    <h2 class="mb-4 text-center">Your Cart</h2>
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        {% for msg in messages %}
-          <div class="alert alert-info text-center">{{ msg }}</div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
+{% block title %}Your Cart - FoodieXpress{% endblock %}
 
-    {% if items and items|length > 0 %}
-      <ul class="list-group mb-4">
-        {% for item in items %}
-          <li class="list-group-item">
-            <strong>{{ item.menuItem.name }}</strong> × {{ item.quantity }}<br>
-            ₹{{ item.menuItem.price }} × {{ item.quantity }} = ₹{{ item.menuItem.price * item.quantity }}<br>
-            <span class="text-muted">Instructions:</span> {{ item.specialInstructions or 'None' }}
-          </li>
-        {% endfor %}
-      </ul>
-
-      <p class="fs-5 text-end"><strong>Total: ₹{{ total }}</strong></p>
-
-      <div class="card mb-4">
-        <div class="card-body">
-          <h4 class="card-title mb-3">Checkout</h4>
-          <form method="POST" action="/order/place">
-            <div class="mb-3">
-              <label class="form-label"><strong>Select Delivery Address:</strong></label>
-              <select name="addressId" class="form-select" required>
-                {% for addr in addresses %}
-                  <option value="{{ addr._id }}">{{ addr.type|capitalize }} - {{ addr.addressLine }}</option>
-                {% endfor %}
-              </select>
+{% block content %}
+<!-- Cart Section -->
+<div class="container py-4">
+  <h2 class="mb-4 text-center">Your Cart</h2>
+  {% if cart_items and cart_items|length > 0 %}
+    <div class="row row-cols-1 row-cols-md-2 g-4 mb-4">
+      {% for item in cart_items %}
+      <div class="col">
+        <div class="card h-100 shadow-sm">
+          <div class="card-body d-flex flex-column flex-md-row align-items-md-center justify-content-between">
+            <div class="flex-grow-1">
+              <h5 class="card-title mb-2">{{ item.menu_item_name }}</h5>
+              <p class="mb-1">Restaurant: <span class="fw-semibold">{{ item.restaurant_name }}</span></p>
+              <p class="mb-1">Quantity: <span class="fw-semibold">{{ item.quantity }}</span></p>
+              <p class="mb-1">Price: <span class="fw-semibold">₹{{ item.price }}</span></p>
             </div>
-            <div class="mb-3">
-              <label class="form-label"><strong>Payment Method:</strong></label>
-              <select name="paymentMethod" class="form-select" required>
-                <option value="COD">Cash on Delivery</option>
-                <option value="UPI">UPI</option>
-                <option value="CART">Card</option>
-              </select>
+            <div class="d-flex flex-column align-items-end ms-md-4 mt-3 mt-md-0">
+              <form method="post" action="/cart/remove/{{ item.id }}">
+                <button type="submit" class="btn btn-outline-danger btn-sm mb-2">Remove</button>
+              </form>
+              <form method="post" action="/cart/update/{{ item.id }}" class="d-flex align-items-center">
+                <input type="number" name="quantity" value="{{ item.quantity }}" min="1" class="form-control form-control-sm me-2" style="width: 70px;">
+                <button type="submit" class="btn btn-custom btn-sm">Update</button>
+              </form>
             </div>
-            <input type="hidden" name="restaurantId" value="{{ restaurant._id }}">
-            <button type="submit" class="btn btn-success w-100 mb-2">🛒 Place Order</button>
-          </form>
-          <form method="POST" action="/cart/clear">
-            <button type="submit" class="btn btn-outline-danger w-100">🗑️ Clear Cart</button>
-          </form>
+          </div>
         </div>
       </div>
-    {% else %}
-      {% if 'Order placed successfully!' in messages %}
-        <div class="alert alert-success text-center"><strong>🎉 Your order has been placed!</strong></div>
-        <div class="text-center"><a href="/orders" class="btn btn-primary">📦 Track your order</a></div>
-      {% elif not messages or '🛒 Your cart  is empty.' not in messages %}
-        <div class="alert alert-warning text-center"><strong>🛒 Your cart is empty.</strong></div>
-      {% endif %}
-    {% endif %}
-    <div class="text-center mt-4">
-      <a href="/restaurants" class="btn btn-secondary">← Continue Shopping</a>
+      {% endfor %}
     </div>
-  </div>
-
-  <!-- Footer -->
-  <footer class="footer mt-auto py-3 bg-light">
-    <div class="container text-center">
-      <span class="text-muted">&copy; {{ year or 2024 }} Food Delivery App</span>
+    <!-- Cart Summary -->
+    <div class="row justify-content-end">
+      <div class="col-md-5 col-lg-4">
+        <div class="card shadow-sm mb-4">
+          <div class="card-body">
+            <h5 class="card-title">Order Summary</h5>
+            <p class="mb-2">Total Items: <span class="fw-semibold">{{ cart_items|length }}</span></p>
+            <p class="mb-2">Total Price: <span class="fw-semibold">₹{{ total_price }}</span></p>
+            <form method="post" action="/cart/checkout">
+              <div class="mb-3">
+                <label for="addressId" class="form-label">Delivery Address</label>
+                <select class="form-select" id="addressId" name="addressId" required>
+                  <option value="">Select Address</option>
+                  {% for addr in addresses %}
+                  <option value="{{ addr._id }}">{{ addr.addressLine }}, {{ addr.city }}, {{ addr.state }} - {{ addr.pincode }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="paymentMethod" class="form-label">Payment Method</label>
+                <select class="form-select" id="paymentMethod" name="paymentMethod" required>
+                  <option value="CASH">Cash on Delivery</option>
+                  <option value="CARD">Card</option>
+                  <option value="UPI">UPI</option>
+                </select>
+              </div>
+              <button type="submit" class="btn btn-custom w-100 btn-lg">Proceed to Checkout</button>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
-  </footer>
-
-  <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+  {% else %}
+    <div class="alert alert-info text-center">Your cart is empty. <a href="/restaurants">Browse restaurants</a> to add items!</div>
+  {% endif %}
+</div>
+{% endblock %}

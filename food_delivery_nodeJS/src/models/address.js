@@ -15,13 +15,17 @@ const addressSchema= new mongoose.Schema({
         type: String,
         require: true 
     },
-    latitude:{
-        type: Number,
-        require:true 
+    city: {
+        type: String,
+        required: true
     },
-    longitude:{
-        type:Number,
-        require:true
+    state: {
+        type: String,
+        required: true
+    },
+    pincode: {
+        type: String,
+        required: true
     }
 }, {timestamps:true})
 

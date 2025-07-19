@@ -38,7 +38,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="G:\mywork\Food_Delivery_final\food-delivery-frontend\venv"
+VIRTUAL_ENV="C:\Users\Shubh\OneDrive\Desktop\log\New folder\Food_delivery\food-delivery-frontend\venv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

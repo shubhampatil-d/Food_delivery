@@ -12,7 +12,12 @@ API_BASE = os.getenv('API_BASE_URL') or 'http://localhost:5001/api'
 
 @app.route('/')
 def home():
-    return render_template('home.html', user=session.get('user'))
+    user = session.get('user')
+    if user:
+        # Assume user['role'] is set; fallback to not admin
+        is_admin = user.get('role', '').lower() == 'admin'
+        user['is_admin'] = is_admin
+    return render_template('home.html', user=user)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -44,37 +49,47 @@ def login():
             json_data = res.json()
             session['token'] = json_data.get('accessToken') or json_data.get('token')
             session['user'] = json_data.get('user', {})
-            return redirect('/')
+            # Redirect based on role
+            if session['user'].get('role', '').lower() == 'admin':
+                return redirect('/admin-home')
+            else:
+                return redirect('/')
         else:
             return render_template('login.html', error=res.json().get("message", "Login failed"))
     return render_template('login.html')
+
+@app.route('/admin-home')
+def admin_home():
+    user = session.get('user')
+    if user:
+        user['is_admin'] = True
+    return render_template('admin_home.html', user=user)
 
 @app.route('/add-address', methods=['GET', 'POST'])
 def add_address():
     if not session.get('token'):
         return redirect('/login')
 
-    message = None
-
     if request.method == 'POST':
         try:
             payload = {
                 "addressLine": request.form['address'],
-                "latitude": float(request.form['latitude']),
-                "longitude": float(request.form['longitude']),
+                "city": request.form['city'],
+                "state": request.form['state'],
+                "pincode": request.form['zip'],
                 "type": request.form['type']
             }
             headers = {'Authorization': f"Bearer {session['token']}"}
             res = requests.post(f"{API_BASE}/addresses", json=payload, headers=headers)
 
-            if res.status_code in [200, 201]:  # Support both 200 & 201
-                message = "✅ Address added successfully!"
+            if res.status_code in [200, 201]:
+                return redirect('/')  # Redirect to home page after successful addition
             else:
-                message = f"❌ Failed to add address: {res.text}"
+                return redirect('/login')  # Redirect to login if not successful (e.g., unauthorized)
         except Exception as e:
-            message = f"❌ Error: {str(e)}"
+            return redirect('/login')  # Redirect to login on any error
 
-    return render_template('add_address.html', message=message)
+    return render_template('add_address.html')
 
 @app.route('/addresses')
 def view_addresses():
@@ -127,7 +142,7 @@ def restaurant_menu(id):
         res = requests.get(f"{API_BASE}/restaurants/{id}/menu")
         if res.status_code == 200:
             data = res.json()
-            return render_template('menu.html', menu=data.get('menu', []), restaurant_id=id)
+            return render_template('menu.html', menu_items=data.get('menu', []), restaurant=data.get('restaurant', {}), restaurant_id=id)
         else:
             flash("Menu not found")
             return redirect('/restaurants')
@@ -142,8 +157,8 @@ def add_to_cart():
         return redirect('/login')
 
     try:
-        menu_item_id = request.form['menuItemId']
-        restaurant_id = request.form['restaurantId']
+        menu_item_id = request.form['menuItem']
+        restaurant_id = request.form['restaurant']
         quantity = int(request.form['quantity'])
         special = request.form.get('specialInstructions', '')
 
@@ -189,16 +204,26 @@ def view_cart():
         restaurant = cart_data.get('restaurant', {})
         addresses = addr_res.json().get('addresses', [])
 
+        # Map items to what the template expects
+        cart_items = []
+        for item in items:
+            cart_items.append({
+                'menu_item_name': item.get('menuItem', {}).get('name', 'Unknown'),
+                'restaurant_name': restaurant.get('name', 'Unknown'),
+                'quantity': item.get('quantity', 1),
+                'price': item.get('menuItem', {}).get('price', 0),
+                'id': item.get('_id', ''),
+            })
+        total_price = total
         return render_template('cart.html', 
-                items=items,
-                total=total, 
+                cart_items=cart_items,
+                total_price=total_price, 
                 restaurant=restaurant,
                 addresses=addresses
                 )
     elif cart_res.status_code == 404:
         # ✅ Handle empty cart with user-friendly message
-        # flash("🛒 Your cart is empty.")
-        return render_template('cart.html', cart={}, items=[], total=0, restaurant={})
+        return render_template('cart.html', cart_items=[], total_price=0, restaurant={})
 
     else:
         print("DEBUG: Cart or Address API failed")
@@ -257,7 +282,22 @@ def view_orders():
 
     if res.status_code == 200:
         orders = res.json().get('orders', [])
-        return render_template('orders.html', orders=orders)
+        mapped_orders = []
+        for order in orders:
+            mapped_orders.append({
+                'id': order.get('_id', ''),
+                'restaurant_name': order.get('restaurant', {}).get('name', 'Unknown') if isinstance(order.get('restaurant'), dict) else str(order.get('restaurant', '')),
+                'status': order.get('status', ''),
+                'total_price': order.get('totalAmount', 0),
+                'items': [
+                    {
+                        'name': item.get('menuItem', {}).get('name', 'Unknown') if isinstance(item.get('menuItem'), dict) else str(item.get('menuItem', '')),
+                        'quantity': item.get('quantity', 1),
+                        'price': item.get('priceAtOrderTime', 0)
+                    } for item in order.get('items', [])
+                ]
+            })
+        return render_template('orders.html', orders=mapped_orders)
     else:
         flash("❌ Failed to fetch order history.")
         return redirect('/')
@@ -295,10 +335,14 @@ def add_restaurant():
                 'cuisineType': request.form['cuisineType'],
                 'description': request.form.get('description', ''),
                 'address': request.form['address'],
-                'latitude': float(request.form['latitude']),
-                'longitude': float(request.form['longitude']),
-                'open': request.form.get('open', ''),
-                'close': request.form.get('close', ''),
+                'location': {
+                    'latitude': float(request.form['latitude']),
+                    'longitude': float(request.form['longitude'])
+                },
+                'operatingHours': {
+                    'open': request.form.get('open', ''),
+                    'close': request.form.get('close', '')
+                },
                 'minimumOrderAmount': float(request.form.get('minimumOrderAmount', 0)),
                 'deliveryFee': float(request.form.get('deliveryFee', 0)),
                 'averagePrepTime': float(request.form.get('averagePrepTime', 0)),
@@ -404,6 +448,104 @@ def add_review():
         except Exception as e:
             message = f"❌ Error: {str(e)}"
     return render_template('add_review.html', message=message, restaurant_id=restaurant_id)
+
+@app.route('/menu/')
+def menu_redirect():
+    flash('Please select a restaurant to view its menu.')
+    return redirect('/restaurants')
+
+@app.route('/cart/update/<item_id>', methods=['POST'])
+def update_cart_item(item_id):
+    if not session.get('token'):
+        return redirect('/login')
+    quantity = int(request.form.get('quantity', 1))
+    headers = {'Authorization': f"Bearer {session['token']}"}
+    # Get current cart
+    cart_res = requests.get(f"{API_BASE}/cart", headers=headers)
+    if cart_res.status_code != 200:
+        flash("❌ Failed to fetch cart.")
+        return redirect('/cart')
+    cart = cart_res.json().get('cart', {})
+    items = cart.get('items', [])
+    # Update the quantity for the item
+    for item in items:
+        if item.get('_id') == item_id:
+            item['quantity'] = quantity
+    # Prepare payload for backend update (replace all items)
+    payload = {
+        'items': [
+            {
+                'menuItem': item['menuItem']['_id'] if isinstance(item['menuItem'], dict) else item['menuItem'],
+                'quantity': item['quantity'],
+                'specialInstructions': item.get('specialInstructions', '')
+            } for item in items
+        ]
+    }
+    res = requests.put(f"{API_BASE}/cart", json=payload, headers=headers)
+    restaurant_id = cart.get('restaurant', {}).get('_id', '')
+    if res.status_code == 200 and restaurant_id:
+        return redirect(f"/restaurants/{restaurant_id}/menu")
+    else:
+        flash("❌ Failed to update cart item.")
+        return redirect('/cart')
+
+@app.route('/cart/remove/<item_id>', methods=['POST'])
+def remove_cart_item(item_id):
+    if not session.get('token'):
+        return redirect('/login')
+    headers = {'Authorization': f"Bearer {session['token']}"}
+    # Get current cart
+    cart_res = requests.get(f"{API_BASE}/cart", headers=headers)
+    if cart_res.status_code != 200:
+        flash("❌ Failed to fetch cart.")
+        return redirect('/cart')
+    cart = cart_res.json().get('cart', {})
+    items = cart.get('items', [])
+    # Remove the item
+    new_items = [item for item in items if item.get('_id') != item_id]
+    if not new_items:
+        # If no items left, clear cart and redirect to restaurants
+        requests.delete(f"{API_BASE}/cart", headers=headers)
+        return redirect('/restaurants')
+    # Prepare payload for backend update (replace all items)
+    payload = {
+        'items': [
+            {
+                'menuItem': item['menuItem']['_id'] if isinstance(item['menuItem'], dict) else item['menuItem'],
+                'quantity': item['quantity'],
+                'specialInstructions': item.get('specialInstructions', '')
+            } for item in new_items
+        ]
+    }
+    res = requests.put(f"{API_BASE}/cart", json=payload, headers=headers)
+    if res.status_code == 200:
+        return redirect('/cart')
+    else:
+        flash("❌ Failed to remove cart item.")
+        return redirect('/cart')
+
+@app.route('/cart/checkout', methods=['POST'])
+def cart_checkout():
+    if not session.get('token'):
+        return redirect('/login')
+    address_id = request.form.get('addressId')
+    payment_method = request.form.get('paymentMethod', 'CASH').upper()
+    if not address_id:
+        flash("❌ Please select a delivery address.")
+        return redirect('/cart')
+    headers = {'Authorization': f"Bearer {session['token']}"}
+    payload = {
+        'address': address_id,
+        'paymentMethod': payment_method,
+        'specialInstructions': '',
+    }
+    res = requests.post(f"{API_BASE}/orders", json=payload, headers=headers)
+    if res.status_code == 201:
+        flash("✅ Order placed successfully!")
+        return redirect('/orders')
+    else:
+        flash(f"❌ Failed to place order: {res.text}")
+        return redirect('/cart')
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set VIRTUAL_ENV=G:\mywork\Food_Delivery_final\food-delivery-frontend\venv
+set VIRTUAL_ENV=C:\Users\Shubh\OneDrive\Desktop\log\New folder\Food_delivery\food-delivery-frontend\venv
 
 if not defined PROMPT set PROMPT=$P$G
 

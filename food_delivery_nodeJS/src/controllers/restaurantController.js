@@ -55,9 +55,9 @@ exports.createRestaurant = async (req, res) => {
 exports.getMenuByRestaurantId = async (req, res) => {
   try {
     const restaurantId = req.params.restaurantId;
-    const menuItems = await MenuItem.find({ restaurant: restaurantId })//.populate('category');
-
-    res.json({ menu: menuItems });
+    const menuItems = await MenuItem.find({ restaurant: restaurantId });
+    const restaurant = await Restaurant.findById(restaurantId);
+    res.json({ menu: menuItems, restaurant });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Failed to fetch menu' });

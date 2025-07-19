@@ -1,84 +1,84 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Add Restaurant</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-  <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
-    <div class="container-fluid">
-      <a class="navbar-brand" href="/">Food Delivery</a>
-    </div>
-  </nav>
-  <div class="container">
-    <h2 class="mb-4 text-center">Add Restaurant</h2>
-    {% if message %}
-      <div class="alert alert-info text-center">{{ message }}</div>
-    {% endif %}
-    <form method="POST">
-      <div class="mb-3">
-        <input type="text" class="form-control" name="name" placeholder="Name" required>
+{% extends 'base1.html' %}
+
+{% block title %}Add Restaurant - FoodieXpress{% endblock %}
+
+{% block content %}
+<!-- Add Restaurant Form Section -->
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-7">
+      <div class="card shadow-sm p-4">
+        <div class="card-body">
+          <h2 class="card-title text-center mb-4">Add Restaurant</h2>
+          {% if error %}
+            <div class="alert alert-danger" role="alert">{{ error }}</div>
+          {% endif %}
+          <form method="post">
+            <div class="form-floating mb-3">
+              <input type="text" class="form-control" id="restaurantName" name="name" placeholder="Restaurant Name" required>
+              <label for="restaurantName">Restaurant Name</label>
+            </div>
+            <div class="form-floating mb-3">
+              <input type="text" class="form-control" id="restaurantCuisine" name="cuisineType" placeholder="Cuisine Type" required>
+              <label for="restaurantCuisine">Cuisine Type</label>
+            </div>
+            <div class="form-floating mb-3">
+              <input type="text" class="form-control" id="restaurantAddress" name="address" placeholder="Address" required>
+              <label for="restaurantAddress">Address</label>
+            </div>
+            <div class="form-floating mb-3">
+              <input type="number" step="any" class="form-control" id="restaurantLatitude" name="latitude" placeholder="Latitude" required>
+              <label for="restaurantLatitude">Latitude</label>
+            </div>
+            <div class="form-floating mb-3">
+              <input type="number" step="any" class="form-control" id="restaurantLongitude" name="longitude" placeholder="Longitude" required>
+              <label for="restaurantLongitude">Longitude</label>
+            </div>
+            <div class="form-floating mb-3">
+              <input type="text" class="form-control" id="restaurantOpen" name="open" placeholder="Opening Time (e.g. 10:00 AM)" required>
+              <label for="restaurantOpen">Opening Time</label>
+            </div>
+            <div class="form-floating mb-3">
+              <input type="text" class="form-control" id="restaurantClose" name="close" placeholder="Closing Time (e.g. 11:00 PM)" required>
+              <label for="restaurantClose">Closing Time</label>
+            </div>
+            <div class="form-floating mb-3">
+              <input type="number" class="form-control" id="minimumOrderAmount" name="minimumOrderAmount" placeholder="Minimum Order Amount" required>
+              <label for="minimumOrderAmount">Minimum Order Amount</label>
+            </div>
+            <div class="form-floating mb-3">
+              <input type="number" class="form-control" id="deliveryFee" name="deliveryFee" placeholder="Delivery Fee" required>
+              <label for="deliveryFee">Delivery Fee</label>
+            </div>
+            <div class="form-floating mb-3">
+              <input type="number" class="form-control" id="averagePrepTime" name="averagePrepTime" placeholder="Average Preparation Time (minutes)" required>
+              <label for="averagePrepTime">Average Preparation Time (minutes)</label>
+            </div>
+            <div class="form-floating mb-3">
+              <select class="form-select" id="status" name="status" required>
+                <option value="open">Open</option>
+                <option value="closed">Closed</option>
+              </select>
+              <label for="status">Status</label>
+            </div>
+            <div class="form-floating mb-3">
+              <input type="number" step="0.1" class="form-control" id="rating" name="rating" placeholder="Rating (0-5)" min="0" max="5">
+              <label for="rating">Rating (0-5)</label>
+            </div>
+            <button type="submit" class="btn btn-custom w-100 py-2">Add Restaurant</button>
+          </form>
+        </div>
       </div>
-      <div class="mb-3">
-        <input type="text" class="form-control" name="cuisineType" placeholder="Cuisine Type" required>
-      </div>
-      <div class="mb-3">
-        <textarea class="form-control" name="description" placeholder="Description"></textarea>
-      </div>
-      <div class="mb-3">
-        <input type="text" class="form-control" name="address" placeholder="Address" required>
-      </div>
-      <div class="row mb-3">
-        <div class="col">
-          <input type="number" step="any" class="form-control" name="latitude" placeholder="Latitude" required>
-        </div>
-        <div class="col">
-          <input type="number" step="any" class="form-control" name="longitude" placeholder="Longitude" required>
-        </div>
-      </div>
-      <div class="row mb-3">
-        <div class="col">
-          <input type="text" class="form-control" name="open" placeholder="Open (e.g. 10:00 AM)">
-        </div>
-        <div class="col">
-          <input type="text" class="form-control" name="close" placeholder="Close (e.g. 11:00 PM)">
-        </div>
-      </div>
-      <div class="row mb-3">
-        <div class="col">
-          <input type="number" step="any" class="form-control" name="minimumOrderAmount" placeholder="Minimum Order Amount">
-        </div>
-        <div class="col">
-          <input type="number" step="any" class="form-control" name="deliveryFee" placeholder="Delivery Fee">
-        </div>
-        <div class="col">
-          <input type="number" step="any" class="form-control" name="averagePrepTime" placeholder="Avg Prep Time (min)">
-        </div>
-      </div>
-      <div class="row mb-3">
-        <div class="col">
-          <select class="form-select" name="status">
-            <option value="open">Open</option>
-            <option value="closed">Closed</option>
-          </select>
-        </div>
-        <div class="col">
-          <input type="number" step="any" class="form-control" name="rating" placeholder="Rating (0-5)">
-        </div>
-      </div>
-      <button type="submit" class="btn btn-primary w-100">Add Restaurant</button>
-    </form>
-    <div class="text-center mt-4">
-      <a href="/" class="btn btn-secondary">Back to Home</a>
     </div>
   </div>
-  <footer class="footer mt-auto py-3 bg-light">
-    <div class="container text-center">
-      <span class="text-muted">&copy; {{ year or 2024 }} Food Delivery App</span>
+</div>
+<div class="col">
+  <div class="card h-100 text-center">
+    <div class="card-body">
+      <h5 class="card-title">Add Menu Item</h5>
+      <p class="card-text">Expand the menu for your restaurant.</p>
+      <a href="/add-menu-item" class="btn btn-custom w-100">🍔 Add Menu Item</a>
     </div>
-  </footer>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html> 
+  </div>
+</div>
+{% endblock %} 

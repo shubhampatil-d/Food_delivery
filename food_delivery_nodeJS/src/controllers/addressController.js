@@ -3,13 +3,14 @@ const Address=require('../models/address')
 
 exports.addAddress= async (req,res) =>{
     try{
-        const {addressLine, latitude, longitude, type} = req.body
+        const {addressLine, city, state, pincode, type} = req.body
         const address= await Address.create({
             user: req.user._id,
             type,
             addressLine,
-            latitude,
-            longitude
+            city,
+            state,
+            pincode
         })
         res.status(201).json({message: 'Address added successfully'})
     }catch ( err){

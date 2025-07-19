@@ -66,3 +66,35 @@ exports.clearCart = async (req, res) => {
     res.status(500).json({ message: 'Failed to clear cart' });
   }
 };
+
+exports.updateCart = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { items } = req.body;
+    let cart = await Cart.findOne({ user: userId });
+    if (!cart) {
+      return res.status(404).json({ message: 'Cart not found' });
+    }
+    if (!items || !Array.isArray(items)) {
+      return res.status(400).json({ message: 'Invalid items array' });
+    }
+    if (items.length === 0) {
+      // If no items left, clear cart
+      await Cart.findOneAndDelete({ user: userId });
+      return res.json({ message: 'Cart cleared' });
+    }
+    cart.items = items;
+    await cart.save();
+    cart = await Cart.findOne({ user: userId })
+      .populate('restaurant')
+      .populate('items.menuItem');
+    // Recalculate totalAmount
+    const totalAmount = cart.items.reduce((sum, item) => {
+      return sum + (item.menuItem.price * item.quantity);
+    }, 0);
+    res.json({ cart: { ...cart.toObject(), totalAmount } });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Failed to update cart' });
+  }
+};

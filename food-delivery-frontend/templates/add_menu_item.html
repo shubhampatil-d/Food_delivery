@@ -1,82 +1,40 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Add Menu Item</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-  <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
-    <div class="container-fluid">
-      <a class="navbar-brand" href="/">Food Delivery</a>
-    </div>
-  </nav>
-  <div class="container">
-    <h2 class="mb-4 text-center">Add Menu Item</h2>
-    {% if message %}
-      <div class="alert alert-info text-center">{{ message }}</div>
-    {% endif %}
-    <form method="POST">
-      <div class="mb-3">
-        <label for="restaurant" class="form-label">Restaurant</label>
-        <select class="form-select" name="restaurant" id="restaurant" required onchange="onRestaurantChange()">
-          <option value="">Select Restaurant</option>
-          {% for r in restaurants %}
-            <option value="{{ r._id }}" {% if r._id == restaurant_id %}selected{% endif %}>{{ r.name }}</option>
-          {% endfor %}
-        </select>
+{% extends 'base1.html' %}
+
+{% block title %}Add Menu Item - FoodieXpress{% endblock %}
+
+{% block content %}
+<!-- Add Menu Item Form Section -->
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-7">
+      <div class="card shadow-sm p-4">
+        <div class="card-body">
+          <h2 class="card-title text-center mb-4">Add Menu Item</h2>
+          {% if error %}
+            <div class="alert alert-danger" role="alert">{{ error }}</div>
+          {% endif %}
+          <form method="post">
+            <div class="form-floating mb-3">
+              <input type="text" class="form-control" id="itemName" name="name" placeholder="Item Name" required>
+              <label for="itemName">Item Name</label>
+            </div>
+            <div class="form-floating mb-3">
+              <input type="text" class="form-control" id="itemCategory" name="category" placeholder="Category" required>
+              <label for="itemCategory">Category</label>
+            </div>
+            <div class="form-floating mb-3">
+              <textarea class="form-control" id="itemDescription" name="description" placeholder="Description" style="height: 80px;"></textarea>
+              <label for="itemDescription">Description</label>
+            </div>
+            <div class="form-floating mb-3">
+              <input type="number" class="form-control" id="itemPrice" name="price" placeholder="Price" min="1" required>
+              <label for="itemPrice">Price (₹)</label>
+            </div>
+            <button type="submit" class="btn btn-custom w-100 py-2">Add Item</button>
+          </form>
+        </div>
       </div>
-      <div class="mb-3">
-        <label for="category" class="form-label">Category</label>
-        <select class="form-select" name="category" id="category" required>
-          <option value="">Select Category</option>
-          {% for c in categories %}
-            <option value="{{ c._id }}">{{ c.name }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="mb-3">
-        <input type="text" class="form-control" name="name" placeholder="Item Name" required>
-      </div>
-      <div class="mb-3">
-        <select class="form-select" name="isVeg">
-          <option value="true">Veg</option>
-          <option value="false">Non-Veg</option>
-        </select>
-      </div>
-      <div class="mb-3">
-        <input type="number" step="any" class="form-control" name="price" placeholder="Price" required>
-      </div>
-      <div class="mb-3">
-        <textarea class="form-control" name="description" placeholder="Description"></textarea>
-      </div>
-      <div class="mb-3">
-        <select class="form-select" name="isAvailable">
-          <option value="true">Available</option>
-          <option value="false">Not Available</option>
-        </select>
-      </div>
-      <button type="submit" class="btn btn-primary w-100">Add Menu Item</button>
-    </form>
-    <div class="text-center mt-4">
-      <a href="{{ back_to_menu_url }}" class="btn btn-secondary">Back to Menu</a>
     </div>
   </div>
-  <footer class="footer mt-auto py-3 bg-light">
-    <div class="container text-center">
-      <span class="text-muted">&copy; {{ year or 2024 }} Food Delivery App</span>
-    </div>
-  </footer>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-  function onRestaurantChange() {
-    var select = document.getElementById('restaurant');
-    var restaurantId = select.value;
-    if (restaurantId) {
-      window.location.href = '/add-menu-item?restaurant_id=' + restaurantId;
-    }
-  }
-  </script>
-</body>
-</html> 
+</div>
+{% endblock %} 
