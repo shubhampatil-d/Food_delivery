@@ -20,8 +20,7 @@ A modern, full-stack Food Delivery platform with a Node.js/Express/MongoDB backe
 ## 🛠️ Tech Stack
 
 **Backend:**
-- Node.js
-- Express.js
+
 - MongoDB (Mongoose)
 - JWT Authentication
 - RESTful API
